@@ -19,11 +19,13 @@ except Exception as e:
 def obtener_recomendaciones_avanzadas(productos_carrito, top_n=3):
     if rules.empty or not productos_carrito:
         return []
-
-    carrito_set = frozenset(productos_carrito)
+ # --- SOLUCIÓN: Convertir la entrada del usuario a minúsculas ---
+    productos_carrito_lower = [p.lower() for p in productos_carrito]
+    carrito_set_lower = frozenset(productos_carrito_lower)
     
-    # Estrategia 1: Buscar regla para el carrito completo
-    reglas_exactas = rules[rules['antecedents'] == carrito_set]
+    # Estrategia 1: Buscar regla para el carrito completo (usando la columna pre-procesada)
+    reglas_exactas = rules[rules['antecedents_lower'] == carrito_set_lower]
+    
     if not reglas_exactas.empty:
         recomendaciones_directas = list(reglas_exactas.iloc[0]['consequents'])
         app.logger.info(f"Recomendación por regla exacta encontrada para {list(carrito_set)}: {recomendaciones_directas}")
