@@ -16,7 +16,7 @@ except Exception as e:
     app.logger.error(f"❌ Error al cargar 'reglas_asociacion.pkl': {e}")
     rules = pd.DataFrame()
 
-def obtener_recomendaciones_avanzadas(productos_carrito, top_n=3):
+def obtener_recomendaciones_avanzadas(productos_carrito, top_n=8):
     if rules.empty or not productos_carrito:
         return []
  # --- SOLUCIÓN: Convertir la entrada del usuario a minúsculas ---
