@@ -11,15 +11,22 @@ logging.basicConfig(level=logging.INFO)
 try:
     with open('reglas_asociacion.pkl', 'rb') as f:
         rules = pickle.load(f)
-    app.logger.info('✅ Modelo de reglas de asociación cargado.')
+    # --- MEJORA: Pre-procesar los nombres a minúsculas una sola vez al cargar ---
+    rules['antecedents_lower'] = rules['antecedents'].apply(lambda x: frozenset([item.lower() for item in x]))
+    app.logger.info('✅ Modelo de reglas de asociación cargado y pre-procesado.')
 except Exception as e:
     app.logger.error(f"❌ Error al cargar 'reglas_asociacion.pkl': {e}")
     rules = pd.DataFrame()
 
 def obtener_recomendaciones_avanzadas(productos_carrito, top_n=8):
+    """
+    Obtiene las mejores recomendaciones para una lista de productos,
+    ignorando mayúsculas/minúsculas.
+    """
     if rules.empty or not productos_carrito:
         return []
- # --- SOLUCIÓN: Convertir la entrada del usuario a minúsculas ---
+
+    # --- SOLUCIÓN: Convertir la entrada del usuario a minúsculas ---
     productos_carrito_lower = [p.lower() for p in productos_carrito]
     carrito_set_lower = frozenset(productos_carrito_lower)
     
@@ -28,13 +35,16 @@ def obtener_recomendaciones_avanzadas(productos_carrito, top_n=8):
     
     if not reglas_exactas.empty:
         recomendaciones_directas = list(reglas_exactas.iloc[0]['consequents'])
-        app.logger.info(f"Recomendación por regla exacta encontrada para {list(carrito_set)}: {recomendaciones_directas}")
+        app.logger.info(f"Recomendación por regla exacta para {productos_carrito}: {recomendaciones_directas}")
         return recomendaciones_directas[:top_n]
 
     # Estrategia 2 (Fallback): Combinar recomendaciones individuales
     recomendaciones_combinadas = []
-    for producto in productos_carrito:
-        reglas_producto = rules[rules['antecedents'] == frozenset({producto})]
+    # --- CORRECCIÓN CRÍTICA AQUÍ ---
+    # Se itera sobre la lista en minúsculas para que coincida con la columna 'antecedents_lower'
+    for producto_lower in productos_carrito_lower:
+        # Se busca en la columna pre-procesada para ignorar mayúsculas/minúsculas
+        reglas_producto = rules[rules['antecedents_lower'] == frozenset({producto_lower})]
         if not reglas_producto.empty:
             for items in reglas_producto['consequents']:
                 recomendaciones_combinadas.extend(list(items))
@@ -43,9 +53,12 @@ def obtener_recomendaciones_avanzadas(productos_carrito, top_n=8):
         return []
 
     conteo = Counter(recomendaciones_combinadas)
-    for item in productos_carrito:
-        if item in conteo:
-            del conteo[item]
+    # Eliminar productos que ya están en el carrito de las recomendaciones
+    for item_lower in productos_carrito_lower:
+        original_items = [item for item in conteo if item.lower() == item_lower]
+        for original_item in original_items:
+            if original_item in conteo:
+                del conteo[original_item]
             
     recomendaciones_finales = [item for item, count in conteo.most_common(top_n)]
     app.logger.info(f"Recomendación por fallback para {productos_carrito}: {recomendaciones_finales}")
