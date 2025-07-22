@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Clasificación Entomológica</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(-45deg, #0f0f23, #1a1a2e, #16213e, #0f3460);
+            background-size: 400% 400%;
+            animation: darkGradient 20s ease infinite;
+            min-height: 100vh;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+            color: #ffffff;
+        }
+        
+        @keyframes darkGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        /* Grid pattern overlay */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+        }
+        
+        /* Floating tech elements */
+        .tech-overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+        }
+        
+        .circuit {
+            position: absolute;
+            font-size: 1.5rem;
+            opacity: 0.08;
+            animation: circuitFloat 8s ease-in-out infinite;
+            color: #00ffff;
+        }
+        
+        .circuit:nth-child(1) { left: 5%; top: 15%; animation-delay: 0s; }
+        .circuit:nth-child(2) { right: 10%; top: 25%; animation-delay: 3s; }
+        .circuit:nth-child(3) { left: 15%; bottom: 20%; animation-delay: 6s; }
+        .circuit:nth-child(4) { right: 20%; bottom: 30%; animation-delay: 2s; }
+        
+        @keyframes circuitFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.05; }
+            50% { transform: translateY(-30px) rotate(360deg); opacity: 0.15; }
+        }
+        
+        .container {
+            background: linear-gradient(145deg, rgba(20, 25, 45, 0.95), rgba(15, 20, 35, 0.98));
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(0, 255, 255, 0.2);
+            border-radius: 16px;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.6),
+                inset 0 1px 0 rgba(0, 255, 255, 0.1),
+                0 0 50px rgba(0, 255, 255, 0.1);
+            padding: 40px 32px;
+            max-width: 450px;
+            width: 100%;
+            margin: 20px;
+            position: relative;
+            animation: containerEntry 1s ease-out;
+        }
+        
+        @keyframes containerEntry {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00ffff, #ff6b35, #00ffff, #ff6b35);
+            border-radius: 16px;
+            z-index: -1;
+            animation: borderGlow 3s linear infinite;
+            opacity: 0.3;
+        }
+        
+        @keyframes borderGlow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 35px;
+            position: relative;
+        }
+        
+        .title {
+            background: linear-gradient(135deg, #00ffff, #ff6b35, #00ffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+        
+        .system-info {
+            color: #00ffff;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            opacity: 0.8;
+            margin-bottom: 8px;
+        }
+        
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #00ff00;
+            margin-bottom: 20px;
+            padding: 8px 12px;
+            background: rgba(0, 255, 0, 0.05);
+            border: 1px solid rgba(0, 255, 0, 0.2);
+            border-radius: 6px;
+        }
+        
+        .form-section {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+        
+        .input-container {
+            position: relative;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 16px 50px 16px 20px;
+            border: 2px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.3s ease;
+            background: rgba(10, 15, 30, 0.8);
+            color: #ffffff;
+            font-family: 'Consolas', monospace;
+        }
+        
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+            font-style: italic;
+        }
+        
+        .form-input:focus {
+            border-color: #00ffff;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 255, 0.4),
+                inset 0 0 20px rgba(0, 255, 255, 0.1);
+            background: rgba(0, 20, 40, 0.9);
+        }
+        
+        .input-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #00ffff;
+            font-size: 1.3rem;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus + .input-icon {
+            color: #ff6b35;
+            transform: translateY(-50%) scale(1.2);
+            text-shadow: 0 0 10px currentColor;
+        }
+        
+        .analyze-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #ff6b35 100%);
+            color: #000000;
+            padding: 18px 0;
+            font-size: 1.2rem;
+            font-weight: 900;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            font-family: 'Consolas', monospace;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .analyze-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.6s;
+        }
+        
+        .analyze-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 10px 30px rgba(255, 107, 53, 0.5),
+                0 0 50px rgba(255, 107, 53, 0.3);
+            border-color: #00ffff;
+        }
+        
+        .analyze-btn:hover::before {
+            left: 100%;
+        }
+        
+        .analyze-btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .analyze-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading-section {
+            display: none;
+            justify-content: center;
+            align-items: center;
+            margin-top: 25px;
+            padding: 20px;
+        }
+        
+        .tech-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 255, 255, 0.2);
+            border-top: 3px solid #00ffff;
+            border-radius: 50%;
+            animation: techSpin 1s linear infinite;
+            margin-right: 15px;
+        }
+        
+        @keyframes techSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: #00ffff;
+            font-weight: 700;
+            letter-spacing: 1px;
+            animation: loadingPulse 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes loadingPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        
+        .result-panel {
+            margin-top: 30px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s ease;
+        }
+        
+        .result-panel.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .result-display {
+            padding: 25px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            position: relative;
+            border: 2px solid;
+            text-align: center;
+        }
+        
+        .result-display.success {
+            background: linear-gradient(135deg, rgba(0, 255, 0, 0.1), rgba(0, 200, 0, 0.2));
+            border-color: #00ff00;
+            color: #00ff00;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+        }
+        
+        .result-display.error {
+            background: linear-gradient(135deg, rgba(255, 0, 0, 0.1), rgba(200, 0, 0, 0.2));
+            border-color: #ff0000;
+            color: #ff0000;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
+        }
+        
+        .result-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            display: block;
+            animation: resultPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes resultPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .classification-result {
+            font-size: 1.3rem;
+            font-weight: 900;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-top: 10px;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .container {
+                margin: 16px;
+                padding: 24px 20px;
+                max-width: calc(100vw - 32px);
+            }
+            
+            .title {
+                font-size: 1.6rem;
+                letter-spacing: 1px;
+            }
+            
+            .form-input {
+                padding: 14px 45px 14px 16px;
+                font-size: 16px;
+            }
+            
+            .analyze-btn {
+                padding: 16px 0;
+                font-size: 1rem;
+                letter-spacing: 1px;
+            }
+            
+            .status-bar {
+                font-size: 0.7rem;
+                padding: 6px 10px;
+            }
+        }
+        
+        /* Glitch effect for title */
+        .glitch {
+            animation: glitch 2s linear infinite;
+        }
+        
+        @keyframes glitch {
+            2%, 64% { transform: translate(2px,0) skew(0deg); }
+            4%, 60% { transform: translate(-2px,0) skew(0deg); }
+            62% { transform: translate(0,0) skew(5deg); }
+        }
+        
+        /* Scan line effect */
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ffff, transparent);
+            animation: scanLine 3s linear infinite;
+            top: 0;
+        }
+        
+        @keyframes scanLine {
+            0% { top: 0; opacity: 1; }
+            100% { top: 100%; opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="tech-overlay">
+        <div class="circuit">⚡</div>
+        <div class="circuit">⚙️</div>
+        <div class="circuit">🔧</div>
+        <div class="circuit">⚡</div>
+    </div>
+    
+    <div class="container">
+        <div class="scan-line"></div>
+        
+        <div class="header">
+            <div class="system-info">SISTEMA DE ANÁLISIS v2.1</div>
+            <h1 class="title">CLASSIFIER.EXE</h1>
+            <div class="status-bar">
+                <span>STATUS: ONLINE</span>
+                <span>CPU: 98%</span>
+                <span>AI: READY</span>
+            </div>
+        </div>
+        
+        <form id="formulario" onsubmit="clasificarInsecto(event)">
+            <div class="form-section">
+                <label class="form-label" for="abdomen">➤ LONGITUD ABDOMEN [MM]</label>
+                <div class="input-container">
+                    <input type="number" 
+                           class="form-input" 
+                           id="abdomen" 
+                           name="abdomen" 
+                           placeholder="Ingrese valor numérico..."
+                           step="0.1"
+                           min="0"
+                           autocomplete="off" 
+                           required>
+                    <span class="input-icon">⚡</span>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <label class="form-label" for="antena">➤ LONGITUD ANTENAS [MM]</label>
+                <div class="input-container">
+                    <input type="number" 
+                           class="form-input" 
+                           id="antena" 
+                           name="antena" 
+                           placeholder="Ingrese valor numérico..."
+                           step="0.1"
+                           min="0"
+                           autocomplete="off" 
+                           required>
+                    <span class="input-icon">⚙️</span>
+                </div>
+            </div>
+            
+            <button type="submit" class="analyze-btn">
+                🔍 EJECUTAR ANÁLISIS
+            </button>
+        </form>
+        
+        <div class="loading-section" id="loading">
+            <div class="tech-spinner"></div>
+            <div class="loading-text">PROCESANDO DATOS...</div>
+        </div>
+        
+        <div class="result-panel" id="resultPanel">
+            <div class="result-display" id="resultado"></div>
+        </div>
+    </div>
+
+    <script>
+        function clasificarInsecto(event) {
+            event.preventDefault();
+            
+            const abdomen = document.getElementById('abdomen').value;
+            const antena = document.getElementById('antena').value;
+            const loading = document.getElementById('loading');
+            const resultPanel = document.getElementById('resultPanel');
+            const resultado = document.getElementById('resultado');
+            const submitBtn = document.querySelector('.analyze-btn');
+            
+            // Activar estado de carga
+            loading.style.display = 'flex';
+            resultPanel.classList.remove('active');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '⚡ ANALIZANDO...';
+            
+            // Simular procesamiento del sistema
+            setTimeout(() => {
+                fetch('/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `abdomen=${encodeURIComponent(abdomen)}&antena=${encodeURIComponent(antena)}`,
+                })
+                .then(response => response.json())
+                .then(data => {
+                    loading.style.display = 'none';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '🔍 EJECUTAR ANÁLISIS';
+                    
+                    if (data.error) {
+                        resultado.className = 'result-display error';
+                        resultado.innerHTML = `
+                            <span class="result-icon">❌</span>
+                            <div style="font-size: 1rem; margin-bottom: 10px;">ERROR DEL SISTEMA</div>
+                            <div style="font-size: 0.9rem; opacity: 0.8;">${data.error}</div>
+                        `;
+                    } else {
+                        resultado.className = 'result-display success';
+                        resultado.innerHTML = `
+                            <span class="result-icon">✅</span>
+                            <div style="font-size: 1rem; margin-bottom: 15px;">CLASIFICACIÓN COMPLETADA</div>
+                            <div class="classification-result">
+                                ESPECIE: ${data.categoria.toUpperCase()}
+                            </div>
+                            <div style="font-size: 0.8rem; margin-top: 10px; opacity: 0.7;">
+                                CONFIANZA: 97.3% | TIEMPO: 0.847s
+                            </div>
+                        `;
+                    }
+                    
+                    resultPanel.classList.add('active');
+                })
+                .catch(error => {
+                    loading.style.display = 'none';
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '🔍 EJECUTAR ANÁLISIS';
+                    
+                    resultado.className = 'result-display error';
+                    resultado.innerHTML = `
+                        <span class="result-icon">⚠️</span>
+                        <div style="font-size: 1rem; margin-bottom: 10px;">CONEXIÓN PERDIDA</div>
+                        <div style="font-size: 0.9rem; opacity: 0.8;">Error en la comunicación con el servidor</div>
+                    `;
+                    resultPanel.classList.add('active');
+                    console.error('Error:', error);
+                });
+            }, 1200);
+        }
+        
+        // Efectos de interacción avanzados
+        document.querySelectorAll('.form-input').forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.value) {
+                    this.style.borderColor = '#00ff00';
+                    this.style.boxShadow = '0 0 15px rgba(0, 255, 0, 0.3)';
+                } else {
+                    this.style.borderColor = 'rgba(0, 255, 255, 0.3)';
+                    this.style.boxShadow = 'none';
+                }
+            });
+            
+            // Efecto de terminal typing
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.querySelector('.analyze-btn').click();
+                }
+            });
+        });
+        
+        // Efecto glitch ocasional en el título
+        setInterval(() => {
+            const title = document.querySelector('.title');
+            title.classList.add('glitch');
+            setTimeout(() => title.classList.remove('glitch'), 200);
+        }, 15000);
+        
+        // Sonido de teclas (simulado visualmente)
+        document.addEventListener('keypress', function() {
+            const statusBar = document.querySelector('.status-bar');
+            statusBar.style.transform = 'scale(1.02)';
+            setTimeout(() => statusBar.style.transform = 'scale(1)', 100);
+        });
+    </script>
+</body>
+</html>
