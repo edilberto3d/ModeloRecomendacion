@@ -18,6 +18,20 @@ except Exception as e:
     app.logger.error(f"❌ Error al cargar 'reglas_asociacion.pkl': {e}")
     rules = pd.DataFrame()
 
+@app.route('/', methods=['GET'])
+def home():
+    """Ruta de salud para confirmar que la API está funcionando."""
+    if rules.empty:
+        status_message = "⚠️ Advertencia: El modelo de reglas de asociación NO pudo cargarse."
+    else:
+        status_message = "✅ El servicio de recomendación está activo."
+        
+    return jsonify({
+        "status": status_message,
+        "api_endpoint": "/recomendar (POST)",
+        "instrucciones": 'Envía una petición POST a /recomendar con un JSON: {"productos": ["item1", "item2"]}'
+    })
+
 def obtener_recomendaciones_avanzadas(productos_carrito, top_n=8):
     """
     Obtiene las mejores recomendaciones para una lista de productos,
