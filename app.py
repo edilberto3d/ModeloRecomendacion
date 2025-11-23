@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 try:
     with open('reglas_asociacion.pkl', 'rb') as f:
         rules = pickle.load(f)
-    # Pre-procesar los nombres a minúsculas y sin espacios para búsquedas eficientes
+    # Pre-procesar los nombres a minúsculas y sin espacios para búsquedas eficientes h
     rules['antecedents_lower'] = rules['antecedents'].apply(lambda x: frozenset([str(item).lower().strip() for item in x]))
     app.logger.info('✅ Modelo de reglas de asociación cargado y pre-procesado.')
 except Exception as e:
